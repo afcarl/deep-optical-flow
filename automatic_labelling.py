@@ -1,23 +1,15 @@
 import os
+import fnmatch
 import cv2
 import flow
 import numpy as np
-import pickle
+import persistence
 
-ACTIONS = {
-    'LEFT': 'L',
-    'RIGHT': 'R',
-    'STOP': 'S',
-    'GO': 'G'
-}
-DEFAULT_INPUT = "sample1.mp4"
-THRESHOLD = 0.5
-DEBUG = True
+ACTIONS = { 'LEFT': 'l', 'RIGHT': 'r', 'STOP': 's', 'GO': 'g' }
+DEFAULT_INPUT = "sample0.mp4"
+THRESHOLD = 0.3
+DEBUG = False
 
-
-FRAME_LABEL_FORMAT = "{:s}/{:05d}.{:s}.jpeg"
-FRAME_LABEL_ANNOTATION = "{:s}/{:05d}.{:s}.ann.jpeg"
-FRAME_FLOW_FORMAT = "{:s}/{:05d}.flow"
 
 
 def draw_label(frame, position, label):
@@ -75,50 +67,25 @@ def label_frame(frame0, frame1, pre_label0=ACTIONS['GO']):
     return label1, mean_dx, dense_flow
 
 
-def save_labelled_frame(frame, label, index, mean_dx, dense_flow, output_folder):
-    frame_filename = FRAME_LABEL_FORMAT.format(output_folder, int(index), label)
-    flow_filename = FRAME_FLOW_FORMAT.format(output_folder, int(index))
-    annotation_filename = FRAME_LABEL_ANNOTATION.format(output_folder, int(index), label)
-
-    os.makedirs(os.path.dirname(frame_filename), exist_ok=True)
-
-    cv2.imwrite(frame_filename, frame)
-
-    if dense_flow is not None:
-        cv2.imwrite(annotation_filename, flow.draw_flow(frame, dense_flow, step=8))
-
-    with open(flow_filename, "+wb") as flow_file:
-        pickle.dump(dense_flow, flow_file)
-
-    if DEBUG and dense_flow is not None:
-        frame0_flow = flow.draw_flow(frame, dense_flow)
-        draw_label(frame0_flow, (40,40), "{:s} : {:f}".format(label, mean_dx))
-        cv2.imshow('flow', frame0_flow)
-        cv2.waitKey(200)
-
-
 def process(video_source, output_folder):
     capture = cv2.VideoCapture(video_source)
 
     flag, frame0 = capture.read()
     if flag:
-        index0 = capture.get(cv2.CAP_PROP_POS_FRAMES)
+        index0 = capture.get(cv2.CAP_PROP_POS_FRAMES) - 1
         label0 = ACTIONS['GO']
-        save_labelled_frame(frame0, label0, index0, 0.0, None, output_folder)
+        persistence.save_label(frame0, label0, index0, output_folder)
 
     while flag:
         flag, frame1 = capture.read()
-        index1 = capture.get(cv2.CAP_PROP_POS_FRAMES)
+        index1 = capture.get(cv2.CAP_PROP_POS_FRAMES) - 1
         if flag:
             label1, mean_dx, dense_flow = label_frame(frame0, frame1, pre_label0=label0)
-            save_labelled_frame(frame1, label1, index1, mean_dx, dense_flow, output_folder)
+            persistence.save_label(frame1, label1, index1, output_folder, dense_flow=dense_flow, annotate=True)
             frame0 = frame1
             label0 = label1
 
 
-def manual_review(folder):
-    pass
-
-
 process(DEFAULT_INPUT, output_folder=os.path.splitext(DEFAULT_INPUT)[0])
+
 

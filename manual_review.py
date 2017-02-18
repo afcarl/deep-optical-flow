@@ -28,7 +28,6 @@ def display_review(frame0_info, frame1_info):
     cv2.imshow("review", np.vstack((analyzing_stack, next_stack)))
 
 
-
 def retrieve_frame_info(index, input_folder):
     annotation_filename_pattern = ANNOTATION_RETRIEVE_FORMAT.format(input_folder, index)
     frame_filename_pattern = FRAME_RETRIEVE_FORMAT.format(input_folder, index)
@@ -51,7 +50,8 @@ def manual_review(video_source, input_folder):
     capture = cv2.VideoCapture(video_source)
     frame_size = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    for index in range(1, frame_size):
+    index = 1
+    while index < frame_size:
         frame0_info = retrieve_frame_info(index, input_folder)
         frame1_info = retrieve_frame_info(index + 1, input_folder)
         display_review(frame0_info, frame1_info)
@@ -59,18 +59,16 @@ def manual_review(video_source, input_folder):
         read_key = 0xFF & cv2.waitKey()
         if read_key == 27:
             break
-        elif read_key == ord('l'):
-            persistence.save_label(frame=frame0_info[0], label='l', index=index, output_folder=input_folder)
+        elif read_key == 81:
+            if index > 1:
+                index -= 1
+        elif chr(read_key) in ['l', 'r', 'g', 's']:
+            persistence.save_label(frame=frame0_info[0], label=chr(read_key), index=index, output_folder=input_folder)
             os.remove(frame0_info[1])
-        elif read_key == ord('r'):
-            persistence.save_label(frame=frame0_info[0], label='r', index=index, output_folder=input_folder)
-            os.remove(frame0_info[1])
-        elif read_key == ord('g'):
-            persistence.save_label(frame=frame0_info[0], label='g', index=index, output_folder=input_folder)
-            os.remove(frame0_info[1])
-        elif read_key == ord('s'):
-            persistence.save_label(frame=frame0_info[0], label='s', index=index, output_folder=input_folder)
-            os.remove(frame0_info[1])
+        else:
+            index += 1
+
+
 
 
 manual_review(DEFAULT_INPUT, input_folder=os.path.splitext(DEFAULT_INPUT)[0])

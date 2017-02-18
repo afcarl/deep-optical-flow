@@ -6,7 +6,7 @@ import persistence
 
 ANNOTATION_RETRIEVE_FORMAT = "{:s}/{:05d}.a.jpeg"
 FRAME_RETRIEVE_FORMAT = "{:s}/{:05d}.?.o.jpeg"
-DEFAULT_INPUT = "sample0.mp4"
+DEFAULT_INPUT = "sample2.mp4"
 SCALE = 0.8
 
 
@@ -70,5 +70,6 @@ def manual_review(video_source, input_folder):
             os.remove(frame0_info[1])
         else:
             index += 1
+    cv2.destroyAllWindows()
 
 manual_review(DEFAULT_INPUT, input_folder=os.path.splitext(DEFAULT_INPUT)[0])

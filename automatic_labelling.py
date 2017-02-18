@@ -1,15 +1,14 @@
 import os
-import fnmatch
 import cv2
 import flow
 import numpy as np
 import persistence
 
-ACTIONS = { 'LEFT': 'l', 'RIGHT': 'r', 'STOP': 's', 'GO': 'g' }
-DEFAULT_INPUT = "sample0.mp4"
+ACTIONS = {'LEFT': 'l', 'RIGHT': 'r', 'STOP': 's', 'GO': 'g'}
+DEFAULT_INPUT = "sample2.mp4"
 THRESHOLD = 0.3
 DEBUG = False
-
+ROI_PERCENT = 0.1
 
 
 def draw_label(frame, position, label):
@@ -21,7 +20,7 @@ def gray_scale(frame):
 
 
 def roi_vertices(shape):
-    x_horizon, y_horizon = (shape[0] * 0.1, shape[1] * 0.1)
+    x_horizon, y_horizon = (shape[0] * ROI_PERCENT, shape[1] * ROI_PERCENT)
     x_half, y_half = (shape[0] / 2, shape[1] / 2)
 
     top_left = (y_half + y_horizon, 0)

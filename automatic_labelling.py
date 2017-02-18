@@ -1,7 +1,8 @@
+import os
 import cv2
 import flow
 import numpy as np
-
+import pickle
 
 ACTIONS = {
     'LEFT': 'L',
@@ -9,9 +10,14 @@ ACTIONS = {
     'STOP': 'S',
     'GO': 'G'
 }
-
-THRESHOLD = 0.3
+DEFAULT_INPUT = "sample1.mp4"
+THRESHOLD = 0.5
 DEBUG = True
+
+
+FRAME_LABEL_FORMAT = "{:s}/{:05d}.{:s}.jpeg"
+FRAME_LABEL_ANNOTATION = "{:s}/{:05d}.{:s}.ann.jpeg"
+FRAME_FLOW_FORMAT = "{:s}/{:05d}.flow"
 
 
 def draw_label(frame, position, label):
@@ -23,7 +29,7 @@ def gray_scale(frame):
 
 
 def roi_vertices(shape):
-    x_horizon, y_horizon = (shape[0] * 0.2, shape[1] * 0.2)
+    x_horizon, y_horizon = (shape[0] * 0.1, shape[1] * 0.1)
     x_half, y_half = (shape[0] / 2, shape[1] / 2)
 
     top_left = (y_half + y_horizon, 0)
@@ -66,18 +72,29 @@ def label_frame(frame0, frame1, pre_label0=ACTIONS['GO']):
     elif mean_dx < -THRESHOLD:
         label1 = ACTIONS['RIGHT']
 
-    if DEBUG:
-        frame0_flow = flow.draw_flow(frame0, dense_flow)
-        draw_label(frame0_flow, (40,40), label1)
-        print(mean_dx)
+    return label1, mean_dx, dense_flow
+
+
+def save_labelled_frame(frame, label, index, mean_dx, dense_flow, output_folder):
+    frame_filename = FRAME_LABEL_FORMAT.format(output_folder, int(index), label)
+    flow_filename = FRAME_FLOW_FORMAT.format(output_folder, int(index))
+    annotation_filename = FRAME_LABEL_ANNOTATION.format(output_folder, int(index), label)
+
+    os.makedirs(os.path.dirname(frame_filename), exist_ok=True)
+
+    cv2.imwrite(frame_filename, frame)
+
+    if dense_flow is not None:
+        cv2.imwrite(annotation_filename, flow.draw_flow(frame, dense_flow, step=8))
+
+    with open(flow_filename, "+wb") as flow_file:
+        pickle.dump(dense_flow, flow_file)
+
+    if DEBUG and dense_flow is not None:
+        frame0_flow = flow.draw_flow(frame, dense_flow)
+        draw_label(frame0_flow, (40,40), "{:s} : {:f}".format(label, mean_dx))
         cv2.imshow('flow', frame0_flow)
         cv2.waitKey(200)
-
-    return label1
-
-
-def save_labelled_frame(frame, label, index, output_folder):
-    pass
 
 
 def process(video_source, output_folder):
@@ -87,14 +104,14 @@ def process(video_source, output_folder):
     if flag:
         index0 = capture.get(cv2.CAP_PROP_POS_FRAMES)
         label0 = ACTIONS['GO']
-        save_labelled_frame(frame0, label0, index0, output_folder)
+        save_labelled_frame(frame0, label0, index0, 0.0, None, output_folder)
 
     while flag:
         flag, frame1 = capture.read()
         index1 = capture.get(cv2.CAP_PROP_POS_FRAMES)
         if flag:
-            label1 = label_frame(frame0, frame1, pre_label0=label0)
-            save_labelled_frame(frame1, label1, index1, output_folder)
+            label1, mean_dx, dense_flow = label_frame(frame0, frame1, pre_label0=label0)
+            save_labelled_frame(frame1, label1, index1, mean_dx, dense_flow, output_folder)
             frame0 = frame1
             label0 = label1
 
@@ -103,5 +120,5 @@ def manual_review(folder):
     pass
 
 
-process("sample2.mp4", output_folder=None)
+process(DEFAULT_INPUT, output_folder=os.path.splitext(DEFAULT_INPUT)[0])
 

@@ -34,7 +34,7 @@ def draw_flow(img, flow, step=32, grayscale=False):
         vis = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
     else:
         vis = img.copy()
-    cv2.polylines(vis, lines, 0, (0, 255, 0))
+    cv2.polylines(vis, lines, 0, (0, 255, 0), thickness=2)
     for (x1, y1), (x2, y2) in lines:
-        cv2.circle(vis, (x1, y1), 1, (0, 255, 0), -1)
+        cv2.circle(vis, (x1, y1), 2, (0, 255, 0), -1)
     return vis

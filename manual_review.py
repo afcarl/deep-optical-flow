@@ -24,7 +24,9 @@ def display_review(frame0_info, frame1_info):
     next_stack = np.hstack((frame1_o, frame1_a))
 
     draw_label(analyzing_stack, (20,20), frame0_name)
+    draw_label(next_stack, (20, 20), "Next Frame")
 
+    cv2.namedWindow("review", cv2.WINDOW_NORMAL)
     cv2.imshow("review", np.vstack((analyzing_stack, next_stack)))
 
 
@@ -51,9 +53,10 @@ def manual_review(video_source, input_folder):
     frame_size = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
     index = 1
-    while index < frame_size:
+    while index < frame_size - 1:
         frame0_info = retrieve_frame_info(index, input_folder)
         frame1_info = retrieve_frame_info(index + 1, input_folder)
+
         display_review(frame0_info, frame1_info)
 
         read_key = 0xFF & cv2.waitKey()

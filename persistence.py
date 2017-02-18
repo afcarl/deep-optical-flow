@@ -16,7 +16,8 @@ def save_label(frame, label, index, output_folder, dense_flow=None, annotate=Fal
     cv2.imwrite(frame_filename, frame)
 
     if dense_flow is not None:
-        if annotate:
-            cv2.imwrite(FRAME_LABEL_ANNOTATION.format(output_folder, int(index)), flow.draw_flow(frame, dense_flow, step=8))
         with open(FRAME_FLOW_FORMAT.format(output_folder, int(index), label), "+wb") as flow_file:
             pickle.dump(dense_flow, flow_file)
+        if annotate:
+            cv2.imwrite(FRAME_LABEL_ANNOTATION.format(output_folder, int(index)), flow.draw_flow(frame, dense_flow, step=32))
+

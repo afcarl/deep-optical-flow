@@ -71,7 +71,4 @@ def manual_review(video_source, input_folder):
         else:
             index += 1
 
-
-
-
 manual_review(DEFAULT_INPUT, input_folder=os.path.splitext(DEFAULT_INPUT)[0])
